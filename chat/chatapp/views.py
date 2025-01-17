@@ -23,7 +23,7 @@ def signup(request):
             new_user = Users(email=email, name=name, password=hashed_password)
             new_user.save()
             messages.success(request, 'Sign-up successful! Please log in.')
-            return redirect('')
+            return redirect('home')
     
     return render(request, 'signup.html')
 
