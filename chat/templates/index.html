@@ -1,0 +1,166 @@
+
+{% comment %} mydesign: send - store - check for messages - add time - retrieve if any message - fetch - display {% endcomment %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home, Chat App</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .sidebar {
+        background-color: #f8f9fa;
+        height: 100vh;
+        overflow-y: auto;
+        border-right: 1px solid #dee2e6;
+        padding: 1rem;
+      }
+      .chat-interface {
+        height: 100vh;
+        padding: 1rem;
+      }
+      .chat-window {
+        height: calc(100vh - 150px);
+        overflow-y: auto;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 1rem;
+      }
+      #show-menu-btn {
+        display: none;
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        z-index: 1050;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <button id="show-menu-btn" class="btn btn-primary">Show Users</button>
+      <div class="row">
+        <div class="leftMenu col-3 sidebar" id="usersPanel">
+          <h4>All Users</h4>
+          <button id="collapse-btn" class="btn btn-danger  ml-4 mb-3">Close</button>
+          <ul class="list-unstyled">
+            {% for user in all_users %}
+            <li class="mb-2">
+              <button
+                class="btn btn-primary user-btn w-100"
+                data-user="{{ user.name }}"
+              >
+                {{ user.name }}
+              </button>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        {% comment %} chat interface {% endcomment %}
+        <div class="col-9 chat-interface">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4>Welcome, {{ currentName }}!</h4>
+            <button class="btn btn-danger" id="logoutButton">Logout</button>
+          </div>
+          <div class="chat-window mt-3" id="chatMessages">
+          </div>
+          <div class="mt-3">
+            <input
+              type="text"
+              id="chatInput"
+              class="form-control"
+              placeholder="Type your message..."
+            />
+            <button class="btn btn-success mt-2" id="sendMessage">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    ></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const collapseBtn = document.getElementById("collapse-btn");
+        const leftMenu = document.getElementById("usersPanel");
+        const showMenuBtn = document.getElementById("show-menu-btn");
+        const chatMessages = document.getElementById("chatMessages");
+        const chatInput = document.getElementById("chatInput");
+        const sendMessageButton = document.getElementById("sendMessage");
+
+        collapseBtn.addEventListener("click", () => {
+          leftMenu.style.display = "none";
+          showMenuBtn.style.display = "block";
+        });
+
+        showMenuBtn.addEventListener("click", () => {
+          leftMenu.style.display = "block";
+          showMenuBtn.style.display = "none";
+        });
+
+        document.querySelectorAll(".user-btn").forEach((button) => {
+          button.addEventListener("click", () => {
+            const userName = button.getAttribute("data-user");
+            chatMessages.innerHTML = `<h5>Chat with ${userName}</h5>`;
+          });
+        });
+
+        sendMessageButton.addEventListener("click", async () => {
+          const message = chatInput.value.trim();
+          const receiver = chatMessages.dataset.currentUser;
+      
+          if (message && receiver) {
+              const response = await fetch('/send_message/', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      sender: "{{ currentName }}",
+                      receiver: receiver,
+                      message: message
+                  })
+              });
+      
+              if (response.ok) {
+                  chatMessages.innerHTML += `<div class="text-end mb-2"><span class="badge bg-primary">${message}</span></div>`;
+                  chatInput.value = "";
+                  chatMessages.scrollTop = chatMessages.scrollHeight;
+              } else {
+                  alert('Failed to send message.');
+              }
+          }
+      });
+      
+      });
+
+
+      document.querySelectorAll(".user-btn").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const userName = button.getAttribute("data-user");
+            chatMessages.dataset.currentUser = userName;
+    
+            const response = await fetch(`/get_messages/{{ currentName }}/${userName}/`);
+            if (response.ok) {
+                const data = await response.json();
+                chatMessages.innerHTML = `<h5>Chat with ${userName}</h5>`;
+                data.messages.forEach(msg => {
+                    const alignment = msg.sender === "{{ currentName }}" ? 'text-end' : 'text-start';
+                    const badgeClass = msg.sender === "{{ currentName }}" ? 'bg-primary' : 'bg-secondary';
+                    chatMessages.innerHTML += `<div class="${alignment} mb-2"><span class="badge ${badgeClass}">${msg.message}</span></div>`;
+                });
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } else {
+                alert('Failed to load messages.');
+            }
+        });
+    });
+    
+
+    </script>
+  </body>
+</html>
