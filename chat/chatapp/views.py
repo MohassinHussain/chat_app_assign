@@ -1,10 +1,12 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, HttpResponse
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from chatapp.models import Users
+from django.contrib.auth import logout
+
 import json
 from chatapp.models import Message
 
@@ -21,7 +23,7 @@ def signup(request):
             new_user = Users(email=email, name=name, password=hashed_password)
             new_user.save()
             messages.success(request, 'Sign-up successful! Please log in.')
-            return redirect('login')
+            return redirect('')
     
     return render(request, 'signup.html')
 
@@ -44,15 +46,23 @@ def login(request):
     return render(request, 'login.html')
 
 def home(request):
-    current_name = request.session.get('currentName', 'Guest')
+    current_name = request.session.get('currentName')
+    if not current_name:
+        messages.error(request, 'You need to log in first.')
+        return redirect('')
+    
     all_users = Users.objects.all()
     return render(request, 'index.html', {"all_users": all_users, "currentName": current_name})
+
 
 
 # SENDING AND RECEIVINF MSGS
 
 @csrf_exempt  # for secure commu.
+@csrf_exempt
 def send_message(request):
+    if not request.session.get('currentName'):
+        return JsonResponse({'error': 'Unauthorized access.'}, status=401)
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -98,3 +108,9 @@ def get_messages(request, sender_name, receiver_name):
         return JsonResponse({'messages': message_list})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+
+def logout_view(request):
+    # logout(request)
+    return redirect('/')
