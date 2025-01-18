@@ -45,6 +45,7 @@ if any message - fetch - display {% endcomment %}
       <div class="row">
         <div class="leftMenu col-3 sidebar" id="usersPanel">
           <h4>All Users</h4>
+          <h1>Select user first</h1>
           <button id="collapse-btn" class="btn btn-danger ml-4 mb-3">
             Close
           </button>
@@ -66,6 +67,8 @@ if any message - fetch - display {% endcomment %}
         {% if currentName != 'Guest' %}
         <div class="col-9 chat-interface">
           <div class="d-flex justify-content-between align-items-center">
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
             <h4>Welcome, {{ currentName }}!</h4>
             <button
               class="btn btn-danger"
@@ -121,25 +124,33 @@ if any message - fetch - display {% endcomment %}
         });
 
         sendMessageButton.addEventListener("click", async () => {
+          console.log("Send button clicked");
+        
           const message = chatInput.value.trim();
           const receiver = chatMessages.dataset.currentUser;
-
+        
+          console.log(`Message: ${message}, Receiver: ${receiver}`);
+        
           if (message && receiver) {
-            const response = await fetch("/send_message/", {
+            const response = await fetch("/send_message", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+              },
               body: JSON.stringify({
                 sender: "{{ currentName }}",
                 receiver: receiver,
                 message: message,
               }),
             });
-
+        
             if (response.ok) {
+              console.log("Message sent successfully");
               chatMessages.innerHTML += `<div class="text-end mb-2"><span class="badge bg-primary">${message}</span></div>`;
               chatInput.value = "";
               chatMessages.scrollTop = chatMessages.scrollHeight;
             } else {
+              console.error("Failed to send message", await response.json());
               alert("Failed to send message.");
             }
           }

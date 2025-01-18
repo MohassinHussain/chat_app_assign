@@ -28,7 +28,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 SESSION_COOKIE_AGE = 3600  # Session expires in 1 hour
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 # Application definition
 
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',

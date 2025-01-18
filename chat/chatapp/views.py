@@ -59,7 +59,7 @@ def home(request):
 # SENDING AND RECEIVINF MSGS
 
 @csrf_exempt  # for secure commu.
-@csrf_exempt
+
 def send_message(request):
     if not request.session.get('currentName'):
         return JsonResponse({'error': 'Unauthorized access.'}, status=401)
